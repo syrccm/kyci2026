@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>온누리 회식지도 센텀</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+/* Layout: 좁은 단일 컬럼 — 헤더 → 탭 → 1~3순위 카드 → 나머지 목록 */
+:root{
+  --bg:#f5f6f3; --surface:#ffffff; --fg:#1d2420; --muted:#5f6b64; --line:#dde2dc;
+  --accent:#1f6b4f; --accent-soft:#e3efe8; --gold:#b07a1a; --star:#d9901a;
+  --display:"Gowun Batang",serif; --body:"IBM Plex Sans KR",system-ui,-apple-system,"Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141916; --surface:#1c231f; --fg:#e7ece8; --muted:#9aa8a0; --line:#2d3731;
+  --accent:#6cc39c; --accent-soft:#1f3329; --gold:#e0b25a; --star:#f0b54a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141916; --surface:#1c231f; --fg:#e7ece8; --muted:#9aa8a0; --line:#2d3731;
+  --accent:#6cc39c; --accent-soft:#1f3329; --gold:#e0b25a; --star:#f0b54a; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55}
+.wrap{max-width:860px;margin:0 auto;padding-inline:16px;padding-block:28px 48px;display:flex;flex-direction:column;gap:22px}
+header{display:flex;flex-direction:column;gap:6px}
+h1{font-family:var(--display);font-size:1.9rem;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:0;font-size:.92rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.82rem;color:var(--muted)}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tab{appearance:none;border:0;background:none;font:inherit;font-weight:600;color:var(--muted);padding:10px 14px;border-bottom:3px solid transparent;cursor:pointer}
+.tab[aria-selected="true"]{color:var(--accent);border-color:var(--accent)}
+.tab:focus-visible,.sort button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tab .cnt{font-weight:400;font-size:.8rem;margin-left:4px}
+.podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.podium{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card.r1{border-color:var(--gold)}
+.rank{font-size:.75rem;font-weight:600;letter-spacing:.06em;color:var(--gold)}
+.card h3{font-family:var(--display);font-size:1.2rem;margin:0;line-height:1.3}
+.score{display:flex;align-items:baseline;gap:6px;font-variant-numeric:tabular-nums}
+.score b{font-size:1.5rem;color:var(--star)}
+.score span{color:var(--muted);font-size:.85rem}
+.kv{display:flex;flex-direction:column;gap:2px;font-size:.85rem;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:.72rem;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent);font-weight:500}
+.chip.warn{background:transparent;border:1px solid var(--gold);color:var(--gold)}
+.card a,.list a{color:var(--accent);font-weight:600;font-size:.85rem;text-decoration:none}
+.card a:hover,.list a:hover{text-decoration:underline}
+.listhead{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.listhead h2{font-size:1rem;margin:0}
+.sort{display:flex;gap:4px}
+.sort button{font:inherit;font-size:.8rem;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:6px;padding:4px 10px;cursor:pointer}
+.sort button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.tblwrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table.list{width:100%;border-collapse:collapse;font-size:.88rem;min-width:560px}
+.list th,.list td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+.list th{font-size:.75rem;color:var(--muted);font-weight:600;letter-spacing:.03em}
+.list tr:last-child td{border-bottom:0}
+.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.list .nm{font-weight:600}
+.list .sm{display:block;color:var(--muted);font-size:.78rem;font-weight:400}
+.notes{font-size:.82rem;color:var(--muted);display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding-top:14px}
+.notes p{margin:0}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>온누리 회식지도 · 센텀</h1>
+    <p class="sub">온누리상품권 가맹 음식점 중 카카오맵 평점 4.0 이상, 한국청소년상담복지개발원(센텀중앙로 79) 기준</p>
+    <div class="meta"><span>가맹 정보: 온누리상품권 가맹점 플랫폼</span><span>평점: 카카오맵</span><span>조회일 2026-09-29</span></div>
+  </header>
+
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+
+  <section class="podium" id="podium" aria-label="1~3순위"></section>
+
+  <section style="display:flex;flex-direction:column;gap:10px">
+    <div class="listhead">
+      <h2 id="restTitle">나머지 음식점</h2>
+      <div class="sort" id="sort">
+        <button type="button" data-k="score" aria-pressed="true">평점순</button>
+        <button type="button" data-k="km" aria-pressed="false">가까운순</button>
+      </div>
+    </div>
+    <div class="tblwrap"><table class="list"><thead><tr><th>음식점</th><th>평점</th><th>거리</th><th>결제</th><th></th></tr></thead><tbody id="rest"></tbody></table></div>
+  </section>
+
+  <div class="notes">
+    <p>순위는 평점과 평가 수를 함께 반영했습니다. 평가가 1~2건뿐인 5.0점이 수십 건 평가된 4.7점보다 앞서지 않도록 평균 4.0점 5건을 더해 보정한 점수 순입니다.</p>
+    <p>거리는 개발원에서 잰 직선거리입니다. 결제는 지류(종이)와 디지털(모바일·카드) 상품권 중 받는 것만 표시했습니다.</p>
+    <p>가맹 여부와 평점은 조회 시점 기준이라 바뀔 수 있습니다. 예약하실 때 온누리상품권 결제가 되는지 한 번 더 확인해 보시면 좋겠습니다.</p>
+  </div>
+</div>
+
+<script>
+const D=[
+["고기","불막열삼 센텀두산위브점","수비벡스코 골목형상점가","지디","곱창·막창",4.3,7,1.3,"730259529"],
+["고기","작업소","해운대 화목쇼핑타운","지디","고기",5,2,4.7,"1955410339"],
+["고기","우정고기집","우동종합상가시장","지","고기",5,3,1.2,"19244900"],
+["고기","차차온족발","해운대시장","지디","족발·보쌈",5,10,3.5,"449863535"],
+["고기","노마진푸줏간 광안리점","민락수변공원 골목형상점가","지디","정육식당",4.6,5,2.2,"738812469"],
+["고기","유황돈돼지생오리","남천동로108번길 골목형상점가","지디","돼지·오리",5,3,3.3,"24267697"],
+["고기","용한우 남천점","어울림마당 골목형상점가","지디","한우",4.8,4,3.5,"1241086781"],
+["고기","유가네닭갈비 부산남천점","어울림마당 골목형상점가","지디","닭갈비",4.2,5,3.7,"1787367860"],
+["고기","수미식당","어울림마당 골목형상점가","지디","고기",4.6,9,3.6,"9154824"],
+["고기","돼지집","어울림마당 골목형상점가","지디","돼지고기",5,13,3.7,"26988621"],
+["고기","남천식육식당","464번길 골목형상점가","지디","식육식당",4.3,3,3.3,"1226310916"],
+["고기","잘돼지참숯갈비 남천점","남천바다내음 골목형상점가","지디","갈비",5,3,4.0,"1952012432"],
+["고기","다정한족발","남천바다내음 골목형상점가","지디","족발·보쌈",4.5,2,4.2,"12781805"],
+["고기","남천동고기집 정을담은식탁","남천바다내음 골목형상점가","지디","고기",4.9,12,4.2,"648896475"],
+["고기","한우야 본점","남천바다내음 골목형상점가","지디","한우",5,10,4.1,"1259073387"],
+["고기","왕코등갈비","남천바다내음 골목형상점가","지디","등갈비",4.9,9,4.1,"1264938233"],
+["고기","한우공판장 부산본점","남천바다내음 골목형상점가","지디","한우",4,8,4.2,"2121247335"],
+["고기","육오랑 남천점","남천바다내음 골목형상점가","지디","고기",5,4,4.0,"932476418"],
+["고기","해변밀면보쌈","남천바다내음 골목형상점가","지디","보쌈·밀면",4.8,12,4.1,"1524934925"],
+["고기","팔도곱창","수영팔도시장","지디","곱창·막창",4.9,10,1.1,"10887969"],
+["고기","용철이떡갈비","수영팔도시장","지디","떡갈비",5,2,1.0,"1643129991"],
+["고기","한방녹차족발","수영팔도시장","지디","족발·보쌈",4,1,1.0,"708485052"],
+["회","우미사케횟집","우동종합상가시장","지디","회",5,7,1.2,"1060558771"],
+["회","재송회센타","재송시장","지디","회",4.7,6,1.4,"200489034"],
+["회","칠암산곰장어","해운대시장","지디","곰장어",4.1,43,3.6,"16613589"],
+["회","부산곰장어","해운대시장","지디","곰장어",4.1,56,3.5,"822091494"],
+["회","해운대산곰장어","해운대시장","지디","곰장어",4.1,41,3.5,"16977064"],
+["회","기장장어집","해운대시장","지디","장어",4.5,62,3.6,"27535375"],
+["회","일번지자갈치산곰장어","해운대시장","지디","곰장어",4,21,3.5,"826555454"],
+["회","해운대아구찜","해운대시장","지디","아구찜",4.1,10,3.5,"16753409"],
+["회","다루동","해운대시장","지디","게·대게",4.3,13,3.5,"435313079"],
+["회","광안다찌 광안리본점","민락수변공원 골목형상점가","지디","회·다찌",4.5,200,2.2,"1764569591"],
+["회","해동","민락수변공원 골목형상점가","지디","회",4.5,27,2.2,"12796733"],
+["회","진양골","민락수변공원 골목형상점가","지디","장어",4.7,31,2.1,"26987154"],
+["회","대게클럽","민락수변공원 골목형상점가","지","게·대게",4,13,2.1,"820081605"],
+["회","윤희횟집","민락수변공원 골목형상점가","지디","회",4.6,41,2.1,"10669436"],
+["회","유가횟집","민락수변공원 골목형상점가","지디","회",4.2,16,2.1,"10678872"],
+["회","광안리 까치횟집","민락수변공원 골목형상점가","지디","회",4.6,26,2.2,"9741213"],
+["회","광안리진양호횟집","민락수변공원 골목형상점가","지디","회",4,72,2.2,"8556968"],
+["회","대영횟집","민락수변공원 골목형상점가","지","회",4.8,173,2.2,"11002178"],
+["회","다솜횟집","민락수변공원 골목형상점가","지디","회",4.3,10,2.2,"11244509"],
+["회","동해세꼬시","어울림마당 골목형상점가","지","세꼬시",4,1,3.7,"27315001"],
+["회","금강복아구전문점","어울림마당 골목형상점가","지디","복·아구",5,1,3.5,"638676502"],
+["회","대가숯불장어구이","어울림마당 골목형상점가","지디","장어구이",4.9,8,3.5,"1659318171"],
+["회","남천낙지","어울림마당 골목형상점가","지디","낙지",4.2,10,3.6,"173809578"],
+["회","양포항","어울림마당 골목형상점가","지디","아구",4.2,14,3.5,"389332316"],
+["회","영진횟집","464번길 골목형상점가","지디","회",5,3,3.3,"877392228"],
+["회","박경례 대구뽈찜전문점 남천동본점","464번길 골목형상점가","지디","대구뽈찜",4,6,3.3,"8689897"],
+["회","칠복장어 남천점","남천바다내음 골목형상점가","지디","장어",4.2,6,4.2,"985116140"],
+["회","고마대구탕","광안리SUP샤카","지디","대구탕",4.7,257,3.2,"16221512"],
+["회","형제초장집","남천해변시장","지디","회·초장집",4,2,4.2,"631347369"],
+["회","왕초장","남천해변시장","지디","회·초장집",4.2,15,4.2,"170681575"],
+["회","갯마을수산","민락골목시장","지디","회",4.9,10,1.7,"15624045"],
+["회","향반갈치짜글이","민락골목시장","지디","갈치",5,1,1.8,"1677098802"],
+["한식","부산삼정돼지국밥 반여점","소반시장 골목형상점가","지디","돼지국밥",5,4,3.9,"129222253"],
+["한식","원산생고기김치찌개","소반시장 골목형상점가","지디","김치찌개",5,1,3.8,"1951207520"],
+["한식","명인막국수&설렁탕","소반시장 골목형상점가","지디","막국수·설렁탕",4.8,6,3.8,"98922804"],
+["한식","초원식당","수비벡스코 골목형상점가","지디","한식",4.3,13,1.2,"16731344"],
+["한식","감나무집추어탕","수비벡스코 골목형상점가","지디","추어탕",4.3,8,1.3,"535812553"],
+["한식","이수경비빔밥","해운대 화목쇼핑타운","지디","비빔밥",5,1,4.8,"930298584"],
+["한식","재성밀면 반여점","반여2동상가시장","지디","밀면",5,2,2.5,"1440260578"],
+["한식","장마루 손칼국수","반여2동상가시장","지디","칼국수",5,1,2.5,"1602556152"],
+["한식","해운대31cm해물칼국수 직영1호점","해운대시장","지","해물칼국수",4.2,96,3.6,"216893493"],
+["한식","제주은희네해장국 부산수영점","민락수변공원 골목형상점가","지디","해장국",4.4,25,2.1,"1143521658"],
+["한식","남천대길추어탕","남천동로108번길 골목형상점가","지디","추어탕",4.2,6,3.4,"1733433807"],
+["한식","서울집","남천동로108번길 골목형상점가","지디","한식",4.6,7,3.4,"1373750781"],
+["한식","광안리찐칼국수","남천동로108번길 골목형상점가","지디","칼국수",4.4,5,3.3,"1935065018"],
+["한식","정든면","어울림마당 골목형상점가","지디","국수",4.7,25,3.5,"783909240"],
+["한식","수영쌈밥","어울림마당 골목형상점가","지디","쌈밥",4.2,12,3.7,"27226859"],
+["한식","주유청강","어울림마당 골목형상점가","지디","한식",4.2,5,3.5,"68541234"],
+["한식","오늘의식탁","464번길 골목형상점가","지디","한식",4.9,11,3.3,"1344473635"],
+["한식","경주식당","남천바다내음 골목형상점가","지디","한정식",4.8,8,4.2,"11504208"],
+["한식","진국정돼지국밥 남천직영점","남천바다내음 골목형상점가","지디","돼지국밥",4.3,21,4.1,"1176480804"],
+["한식","남천리진짜촌국시","남천바다내음 골목형상점가","지디","국수",4.8,5,4.0,"1928170586"],
+["한식","마을입구","남천바다내음 골목형상점가","지디","한식",5,1,4.0,"1475986181"],
+["한식","황해도","남천바다내음 골목형상점가","지디","찌개·전골",4.5,8,4.0,"982449519"],
+["한식","원조개금밀면 광안리점","광안리SUP샤카","지디","밀면",4.2,25,3.3,"919114311"],
+["한식","남천소국밥 해변점","남천해변시장","지","소국밥",4.8,13,4.2,"945480936"],
+["한식","포옥차","민락골목시장","지디","한식",5,2,1.9,"288337809"],
+["한식","땅스부대찌개 부산팔도시장점","수영팔도시장","지디","부대찌개",4.1,7,1.0,"507010519"],
+["한식","장터국밥","수영팔도시장","지디","국밥",4.8,13,0.9,"15725480"]
+].map(a=>({t:a[0],n:a[1],m:a[2],pay:a[3],cat:a[4],r:a[5],rc:a[6],km:a[7],id:a[8],s:(a[5]*a[6]+4*5)/(a[6]+5)}));
+
+const TABS=[{k:"고기",label:"고기"},{k:"회",label:"회·해산물"},{k:"한식",label:"한식"}];
+let cur="고기", sortK="score";
+try{const v=localStorage.getItem("onnuri-tab");if(TABS.some(t=>t.k===v))cur=v;}catch(e){}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const payChips=p=>(p.includes("지")?'<span class="chip">지류</span>':'')+(p.includes("디")?'<span class="chip">디지털</span>':'<span class="chip warn">종이 상품권만</span>');
+const link=id=>`<a href="https://place.map.kakao.com/${id}" target="_blank" rel="noopener">카카오맵 보기 ↗</a>`;
+const byScore=(a,b)=>b.s-a.s||b.rc-a.rc;
+
+function render(){
+  const tabs=document.getElementById("tabs");
+  tabs.innerHTML=TABS.map(t=>`<button class="tab" role="tab" id="tab-${t.k}" aria-selected="${t.k===cur}" data-k="${t.k}">${t.label}<span class="cnt">${D.filter(d=>d.t===t.k).length}</span></button>`).join("");
+  const list=D.filter(d=>d.t===cur).sort(byScore);
+  const top=list.slice(0,3), rest=list.slice(3);
+  document.getElementById("podium").innerHTML=top.map((d,i)=>`
+    <article class="card r${i+1}">
+      <div class="rank">${i+1}순위</div>
+      <h3>${esc(d.n)}</h3>
+      <div class="score"><b>★ ${d.r.toFixed(1)}</b><span>평가 ${d.rc}건</span></div>
+      <div class="kv"><span>${esc(d.cat)}</span><span>${esc(d.m)}</span><span>개발원에서 ${d.km.toFixed(1)}km</span></div>
+      <div class="chips">${payChips(d.pay)}</div>
+      ${link(d.id)}
+    </article>`).join("");
+  const r2=[...rest].sort(sortK==="km"?(a,b)=>a.km-b.km:byScore);
+  document.getElementById("restTitle").textContent=`나머지 음식점 ${rest.length}곳`;
+  document.getElementById("rest").innerHTML=r2.map(d=>`<tr>
+    <td><span class="nm">${esc(d.n)}</span><span class="sm">${esc(d.cat)} · ${esc(d.m)}</span></td>
+    <td class="num">★ ${d.r.toFixed(1)} <span class="sm">${d.rc}건</span></td>
+    <td class="num">${d.km.toFixed(1)}km</td>
+    <td><div class="chips">${payChips(d.pay)}</div></td>
+    <td>${link(d.id)}</td></tr>`).join("");
+  document.querySelectorAll("#sort button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.k===sortK));
+}
+document.getElementById("tabs").addEventListener("click",e=>{const b=e.target.closest(".tab");if(!b)return;cur=b.dataset.k;try{localStorage.setItem("onnuri-tab",cur)}catch(e){}render();});
+document.getElementById("sort").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;sortK=b.dataset.k;render();});
+render();
+</script>
+</body>
+</html>
